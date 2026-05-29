@@ -85,9 +85,21 @@ export function readSavedTask3Settings(): Task3SettingsState {
 
   try {
     const parsed = JSON.parse(savedSettings) as Partial<Task3SettingsState>
+    const materialUnderstanding = {
+      ...EMPTY_TASK3_SETTINGS.materialUnderstanding,
+      ...(parsed.materialUnderstanding ?? {}),
+      enabledAnalyzers: {
+        ...EMPTY_TASK3_SETTINGS.materialUnderstanding.enabledAnalyzers,
+        ...(parsed.materialUnderstanding?.enabledAnalyzers ?? {}),
+      },
+      defaultGapFixes: parsed.materialUnderstanding?.defaultGapFixes?.length
+        ? parsed.materialUnderstanding.defaultGapFixes
+        : EMPTY_TASK3_SETTINGS.materialUnderstanding.defaultGapFixes,
+    }
     return {
       ...EMPTY_TASK3_SETTINGS,
       ...parsed,
+      materialUnderstanding,
       steps: parsed.steps?.length ? parsed.steps : EMPTY_TASK3_SETTINGS.steps,
     }
   } catch {

@@ -109,6 +109,68 @@ function App() {
       : analysisSettings.methodName === 'deep'
       ? analysisSettings.directVideoDeepSteps.map((step) => step.name).join(' / ')
       : analysisSettings.fastSteps[0]?.name ?? '一次性概览'
+  const materialSlotOptions = [
+    { value: '', label: '自动判断' },
+    { value: 'hook', label: '开头吸引' },
+    { value: 'product-closeup', label: '商品特写' },
+    { value: 'usage', label: '使用过程' },
+    { value: 'comparison', label: '对比镜头' },
+    { value: 'cta', label: '结尾 CTA' },
+    { value: 'subtitle-fill', label: '文案/字幕' },
+    { value: 'cover', label: '封面画面' },
+    { value: 'audio', label: '音轨/BGM' },
+  ]
+  const analyzerOptions = [
+    { key: 'metadata', label: '基础元数据' },
+    { key: 'sceneDetect', label: '场景/片段' },
+    { key: 'ocr', label: 'OCR 文字' },
+    { key: 'asr', label: 'ASR 口播' },
+    { key: 'vision', label: '视觉理解' },
+    { key: 'audioMood', label: '音频情绪' },
+  ] as const
+  const gapFixOptions = [
+    { key: 'text_fill', label: '文案/字幕' },
+    { key: 'packaging_fill', label: '包装卡片' },
+    { key: 'reuse_crop', label: '裁切复用' },
+    { key: 'structure_reorder', label: '结构重排' },
+    { key: 'aigc_generate', label: 'AIGC 生成' },
+  ] as const
+  const referenceStructureSummary =
+    analysisResult?.analysis.summary ||
+    analysisVideo?.analysis?.voiceOverview?.summary ||
+    analysisResult?.decomposition?.rawOverview ||
+    '当前还没有可展示的完整拆解结构。'
+  const referenceSteps = analysisResult?.decomposition?.steps ?? []
+  const referenceShotCount = analysisResult?.analysis.shotCount ?? analysisVideo?.analysis?.shotCount ?? null
+
+  const renderTask3MaterialPreview = (material: Task3Material) => {
+    if (!material.url && material.type !== 'text') {
+      return <div className="material-preview-fallback">暂无预览</div>
+    }
+
+    if (material.type === 'image') {
+      return <img src={material.url} alt={material.name} />
+    }
+
+    if (material.type === 'video') {
+      return <video src={material.url} controls preload="metadata" playsInline />
+    }
+
+    if (material.type === 'audio') {
+      return (
+        <div className="material-audio-preview">
+          <strong>{material.name}</strong>
+          <audio src={material.url} controls preload="metadata" />
+        </div>
+      )
+    }
+
+    return (
+      <div className="material-text-preview">
+        {material.text?.trim() ? material.text.slice(0, 240) : '文本素材内容为空，可在备注或文案区补充说明。'}
+      </div>
+    )
+  }
 
   const cloneAnalysisSettings = (settings: AnalysisSettingsState): AnalysisSettingsState => ({
     ...settings,
@@ -451,7 +513,10 @@ function App() {
   }, [currentPage, settingsLoadedOnce])
 
   useEffect(() => {
-    if (currentPage === 'analysis' && analysisVideo) {
+    if ((currentPage === 'analysis' || currentPage === 'task3-reference') && analysisVideo) {
+      if (currentPage === 'task3-reference') {
+        setAnalysisResult(null)
+      }
       void loadAnalysis(analysisVideo.id)
     }
   }, [currentPage, analysisVideo?.id])
@@ -879,6 +944,29 @@ function App() {
     }))
   }
 
+  const updateTask3Material = (materialId: string, patch: Partial<Task3Material>) => {
+    setTask3Draft((previous) => ({
+      ...previous,
+      materials: previous.materials.map((material) =>
+        material.id === materialId ? { ...material, ...patch } : material,
+      ),
+    }))
+  }
+
+  const deleteTask3Material = (materialId: string) => {
+    setTask3Draft((previous) => ({
+      ...previous,
+      materials: previous.materials.filter((material) => material.id !== materialId),
+    }))
+    setTask3Notice('已从当前任务中移除该素材。')
+  }
+
+  const parseTagsValue = (value: string) =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
   const createTask3InputPayload = () => ({
     topic: task3Draft.topic,
     sellingPoints: task3Draft.sellingPointsText
@@ -980,9 +1068,18 @@ function App() {
   const openTask3Settings = () => {
     setDraftTask3Settings({
       ...task3Settings,
+      materialUnderstanding: {
+        ...task3Settings.materialUnderstanding,
+        enabledAnalyzers: { ...task3Settings.materialUnderstanding.enabledAnalyzers },
+        defaultGapFixes: [...task3Settings.materialUnderstanding.defaultGapFixes],
+      },
       steps: task3Settings.steps.map((step) => ({ ...step })),
     })
     setCurrentPage('task3-settings')
+  }
+
+  const openTask3ReferencePage = () => {
+    setCurrentPage('task3-reference')
   }
 
   const updateTask3GapResolution = (gapId: string, resolution: string) => {
@@ -1558,6 +1655,126 @@ function App() {
           </section>
 
           <section className="analysis-control-card">
+            <div className="analysis-step-header">
+              <div>
+                <p className="section-kicker">素材理解 Agent</p>
+                <h2>分析策略</h2>
+              </div>
+            </div>
+            <div className="analysis-method-panel">
+              <label className="analysis-method-field">
+                <span>分析深度</span>
+                <select
+                  value={draftTask3Settings.materialUnderstanding.mode}
+                  onChange={(event) =>
+                    setDraftTask3Settings((previous) => ({
+                      ...previous,
+                      materialUnderstanding: {
+                        ...previous.materialUnderstanding,
+                        mode: event.target.value as Task3SettingsState['materialUnderstanding']['mode'],
+                      },
+                    }))
+                  }
+                >
+                  <option value="fast">快速规则</option>
+                  <option value="standard">标准分析</option>
+                  <option value="deep">深度多模态</option>
+                </select>
+              </label>
+              <label className="analysis-method-field">
+                <span>槽位匹配策略</span>
+                <select
+                  value={draftTask3Settings.materialUnderstanding.slotMatchingStrategy}
+                  onChange={(event) =>
+                    setDraftTask3Settings((previous) => ({
+                      ...previous,
+                      materialUnderstanding: {
+                        ...previous.materialUnderstanding,
+                        slotMatchingStrategy: event.target
+                          .value as Task3SettingsState['materialUnderstanding']['slotMatchingStrategy'],
+                      },
+                    }))
+                  }
+                >
+                  <option value="rule-first">规则优先</option>
+                  <option value="hybrid">规则 + 模型</option>
+                  <option value="llm-first">模型优先</option>
+                </select>
+              </label>
+              <label className="analysis-method-field">
+                <span>置信度阈值</span>
+                <input
+                  type="number"
+                  min="0.3"
+                  max="0.95"
+                  step="0.05"
+                  value={draftTask3Settings.materialUnderstanding.confidenceThreshold}
+                  onChange={(event) =>
+                    setDraftTask3Settings((previous) => ({
+                      ...previous,
+                      materialUnderstanding: {
+                        ...previous.materialUnderstanding,
+                        confidenceThreshold: Number.parseFloat(event.target.value) || 0.65,
+                      },
+                    }))
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="task3-checkbox-grid">
+              {analyzerOptions.map((option) => (
+                <label key={option.key} className="analysis-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={draftTask3Settings.materialUnderstanding.enabledAnalyzers[option.key]}
+                    onChange={(event) =>
+                      setDraftTask3Settings((previous) => ({
+                        ...previous,
+                        materialUnderstanding: {
+                          ...previous.materialUnderstanding,
+                          enabledAnalyzers: {
+                            ...previous.materialUnderstanding.enabledAnalyzers,
+                            [option.key]: event.target.checked,
+                          },
+                        },
+                      }))
+                    }
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="task3-checkbox-grid">
+              {gapFixOptions.map((option) => (
+                <label key={option.key} className="analysis-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={draftTask3Settings.materialUnderstanding.defaultGapFixes.includes(option.key)}
+                    onChange={(event) =>
+                      setDraftTask3Settings((previous) => {
+                        const current = previous.materialUnderstanding.defaultGapFixes
+                        const defaultGapFixes = event.target.checked
+                          ? [...current, option.key]
+                          : current.filter((item) => item !== option.key)
+                        return {
+                          ...previous,
+                          materialUnderstanding: {
+                            ...previous.materialUnderstanding,
+                            defaultGapFixes,
+                          },
+                        }
+                      })
+                    }
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section className="analysis-control-card">
             <p className="section-kicker">分析步骤</p>
             <div className="analysis-step-grid">
               {draftTask3Settings.steps.map((step) => (
@@ -1635,6 +1852,180 @@ function App() {
     )
   }
 
+  if (currentPage === 'task3-reference') {
+    return (
+      <main className="app-shell">
+        {/* 页面3副页：爆款结构参考 */}
+        <section className="analysis-panel">
+          <div className="analysis-header">
+            <div>
+              <p className="eyebrow">页面3副页 / 爆款结构参考</p>
+              <h1>参考视频拆解结果</h1>
+              <p className="hero-text">
+                汇总第三步所需的案例拆解结果，用于对照新素材是否能覆盖原视频结构。
+              </p>
+            </div>
+            <div className="analysis-header-actions">
+              <button type="button" className="ghost-button" onClick={() => setCurrentPage('task3')}>
+                返回页面3
+              </button>
+            </div>
+          </div>
+
+          <div className="analysis-layout reference-layout">
+            <aside className="analysis-sidebar">
+              <div className="panel-header">
+                <div>
+                  <p className="section-kicker">参考视频</p>
+                  <h2>已带入 {analysisVideoItems.length} 个</h2>
+                </div>
+              </div>
+
+              <div className="video-list analysis-video-list">
+                {analysisVideoItems.map((video, index) => (
+                  <button
+                    key={video.id}
+                    type="button"
+                    className={`video-list-item ${analysisVideo?.id === video.id ? 'active' : ''}`.trim()}
+                    onClick={() => setAnalysisTargetVideoId(video.id)}
+                  >
+                    <div className="video-thumb">
+                      {video.coverUrl ? (
+                        <img src={video.coverUrl} alt={`${video.name} cover`} />
+                      ) : (
+                        <div className="thumb-fallback">无封面</div>
+                      )}
+                    </div>
+                    <div className="video-summary">
+                      <div className="summary-topline">
+                        <strong title={video.name}>参考视频{index + 1}</strong>
+                        <span className={`status-pill status-${video.status}`}>{statusLabel(video.status)}</span>
+                      </div>
+                      <p>{video.name}</p>
+                      <p>
+                        {formatDuration(video.durationMs)} · {video.width} x {video.height}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            <section className="analysis-main">
+              {analysisVideo ? (
+                <>
+                  <div className="analysis-hero">
+                    <article className="analysis-cover-card">
+                      <p className="section-kicker">当前参考</p>
+                      <div className="analysis-cover-shell">
+                        {analysisVideo.coverUrl ? (
+                          <img src={analysisVideo.coverUrl} alt={`${analysisVideo.name} cover`} />
+                        ) : (
+                          <div className="thumb-fallback analysis-cover-fallback">无封面</div>
+                        )}
+                      </div>
+                      <h2 title={analysisVideo.name}>
+                        {analysisVideoIndex >= 0 ? `参考视频${analysisVideoIndex + 1}` : '参考视频'}
+                      </h2>
+                      <p>
+                        {formatDuration(analysisVideo.durationMs)} · {analysisVideo.width} x {analysisVideo.height}
+                      </p>
+                    </article>
+
+                    <article className="analysis-control-card">
+                      <div className="analysis-toggle-row">
+                        <div>
+                          <p className="section-kicker">结构摘要</p>
+                          <h2>当前可迁移信息</h2>
+                        </div>
+                        <span className="count-badge">{referenceShotCount ?? '-'}</span>
+                      </div>
+                      <div className="meta-grid reference-meta-grid">
+                        <article className="meta-card">
+                          <span>拆解模式</span>
+                          <strong>{analysisResult ? formatAnalysisMethodLabel(analysisResult.methodName) : '-'}</strong>
+                        </article>
+                        <article className="meta-card">
+                          <span>镜头段数</span>
+                          <strong>{referenceShotCount ?? '-'}</strong>
+                        </article>
+                        <article className="meta-card">
+                          <span>结构步骤</span>
+                          <strong>{referenceSteps.length || '-'}</strong>
+                        </article>
+                        <article className="meta-card">
+                          <span>缓存状态</span>
+                          <strong>{analysisResult?.cached ? '临时缓存' : analysisResult ? '最新结果' : '-'}</strong>
+                        </article>
+                      </div>
+                      <div className="analysis-result-meta">
+                        <span>拆解概览</span>
+                        <strong>{referenceStructureSummary}</strong>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div className="analysis-results">
+                    <article className="analysis-result-card">
+                      <p className="section-kicker">镜头节奏</p>
+                      <h3>{referenceShotCount ? `${referenceShotCount} 个镜头段` : '暂无镜头段'}</h3>
+                      <p>
+                        {analysisResult?.analysis.shotDetection?.label ??
+                          analysisVideo.analysis?.shotDetection?.label ??
+                          '等待页面2拆解结果。'}
+                      </p>
+                    </article>
+
+                    <article className="analysis-result-card">
+                      <p className="section-kicker">字幕/口播</p>
+                      <h3>{analysisResult?.analysis.voiceOverview?.hasSpeech ? '包含口播' : '待确认'}</h3>
+                      <p>
+                        {analysisResult?.analysis.voiceOverview?.summary ??
+                          analysisResult?.analysis.subtitleOverview?.sampleLines?.join(' / ') ??
+                          '暂无字幕或口播摘要。'}
+                      </p>
+                    </article>
+
+                    <article className="analysis-result-card analysis-result-wide">
+                      <p className="section-kicker">拆解步骤输出</p>
+                      <div className="analysis-shot-list">
+                        {referenceSteps.length ? (
+                          referenceSteps.map((step, index) => (
+                            <article key={`${step.id ?? 'step'}-${index}`} className="analysis-step-card">
+                              <div className="analysis-step-card-heading">
+                                <div>
+                                  <p className="section-kicker">{step.modelType ?? 'step'}</p>
+                                  <h3>{step.name ?? step.id ?? `步骤 ${index + 1}`}</h3>
+                                </div>
+                                <span className="status-pill status-ready">{step.provider ?? step.model ?? 'done'}</span>
+                              </div>
+                              {String(step.id ?? step.name ?? '').toLowerCase().includes('summary') ||
+                              String(step.name ?? '').includes('概览') ? (
+                                <p>该步骤的概览内容已在上方“结构摘要”中展示。</p>
+                              ) : (
+                                <pre className="reference-json-preview compact">
+                                  {JSON.stringify(step.output ?? step.rawOutput ?? {}, null, 2)}
+                                </pre>
+                              )}
+                            </article>
+                          ))
+                        ) : (
+                          <div className="empty-state">当前参考视频还没有结构化拆解步骤输出。</div>
+                        )}
+                      </div>
+                    </article>
+                  </div>
+                </>
+              ) : (
+                <div className="empty-state">暂无参考视频，请先从页面1上传并进入页面2拆解。</div>
+              )}
+            </section>
+          </div>
+        </section>
+      </main>
+    )
+  }
+
   if (currentPage === 'task3') {
     return (
       <main className="app-shell">
@@ -1664,11 +2055,45 @@ function App() {
 
           <div className="analysis-layout">
             <aside className="analysis-sidebar">
-              <p className="section-kicker">样例结构摘要</p>
-              <h2>来自页面2</h2>
-              <p>视频数量：{analysisVideoItems.length}</p>
+              <div className="panel-header">
+                <div>
+                  <p className="section-kicker">爆款结构参考</p>
+                  <h2>来自页面2</h2>
+                </div>
+                <span className="count-badge">{analysisVideoItems.length}</span>
+              </div>
               <p>当前设置：{formatAnalysisMethodLabel(analysisSettings.methodName)}</p>
-              <p>估算镜头段数：{analysisVideo?.analysis?.shotCount ?? analysisResult?.analysis.shotCount ?? '-'}</p>
+              <p>估算镜头段数：{referenceShotCount ?? '-'}</p>
+              <div className="reference-mini-list">
+                {analysisVideoItems.slice(0, 3).map((video, index) => (
+                  <button
+                    key={video.id}
+                    type="button"
+                    className={`reference-mini-item ${analysisVideo?.id === video.id ? 'active' : ''}`.trim()}
+                    onClick={() => setAnalysisTargetVideoId(video.id)}
+                  >
+                    <span>{index + 1}</span>
+                    <strong title={video.name}>{video.name}</strong>
+                  </button>
+                ))}
+              </div>
+              <div className="analysis-result-meta">
+                <span>当前参考摘要</span>
+                <strong>{analysisVideo?.name ?? '未选择参考视频'}</strong>
+                <span className="analysis-settings-summary" title={referenceStructureSummary}>
+                  {referenceStructureSummary}
+                </span>
+              </div>
+              <button type="button" className="secondary-button" onClick={openTask3ReferencePage}>
+                查看完整结构参考
+              </button>
+              <div className="analysis-result-meta">
+                <span>素材理解设置</span>
+                <strong>
+                  {task3Settings.materialUnderstanding.mode} · {task3Settings.materialUnderstanding.slotMatchingStrategy}
+                </strong>
+                <span>阈值 {task3Settings.materialUnderstanding.confidenceThreshold}</span>
+              </div>
             </aside>
 
             <section className="analysis-main">
@@ -1712,17 +2137,83 @@ function App() {
                     className="hidden-input"
                     type="file"
                     multiple
-                    accept=".mp4,.mov,.jpg,.jpeg,.png,.webp,.txt"
+                    accept=".mp4,.mov,.jpg,.jpeg,.png,.webp,.txt,.mp3,.wav,.m4a,.aac,.ogg"
                     onChange={handleTask3MaterialChange}
                   />
                 </div>
                 <div className="analysis-step-list">
                   {task3Draft.materials.length ? (
                     task3Draft.materials.map((material) => (
-                      <div key={material.id} className="analysis-shot-item">
-                        <strong>{material.name}</strong>
-                        <span>{material.type}</span>
-                      </div>
+                      <article key={material.id} className="analysis-step-card task3-material-card">
+                        <div className="analysis-step-card-heading">
+                          <div>
+                            <p className="section-kicker">{material.type}</p>
+                            <h3>{material.name}</h3>
+                          </div>
+                          <div className="material-card-actions">
+                            <span className="status-pill status-uploaded">已导入</span>
+                            <button
+                              type="button"
+                              className="ghost-button compact-button"
+                              onClick={() => deleteTask3Material(material.id)}
+                            >
+                              删除
+                            </button>
+                          </div>
+                        </div>
+                        <div className={`material-preview material-preview-${material.type}`}>
+                          {renderTask3MaterialPreview(material)}
+                        </div>
+                        <div className="material-edit-grid">
+                          <label className="analysis-method-field">
+                            <span>素材类型</span>
+                            <select
+                              value={material.type}
+                              onChange={(event) =>
+                                updateTask3Material(material.id, {
+                                  type: event.target.value as Task3Material['type'],
+                                })
+                              }
+                            >
+                              <option value="image">图片</option>
+                              <option value="video">视频</option>
+                              <option value="text">文本</option>
+                              <option value="audio">音轨</option>
+                            </select>
+                          </label>
+                          <label className="analysis-method-field">
+                            <span>用途提示</span>
+                            <select
+                              value={material.usageHint ?? ''}
+                              onChange={(event) => updateTask3Material(material.id, { usageHint: event.target.value })}
+                            >
+                              {materialSlotOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="analysis-method-field">
+                            <span>标签</span>
+                            <input
+                              value={(material.tags ?? []).join(', ')}
+                              onChange={(event) =>
+                                updateTask3Material(material.id, { tags: parseTagsValue(event.target.value) })
+                              }
+                              placeholder="商品, 包装, 对比"
+                            />
+                          </label>
+                        </div>
+                        <label className="analysis-method-field">
+                          <span>备注</span>
+                          <input
+                            value={material.notes ?? ''}
+                            onChange={(event) => updateTask3Material(material.id, { notes: event.target.value })}
+                            placeholder="例如：竖版、适合做开头、背景音较干净"
+                          />
+                        </label>
+                      </article>
                     ))
                   ) : (
                     <div className="empty-state">还没有上传素材。</div>
@@ -1764,6 +2255,7 @@ function App() {
                 <h3>{task3InputRecord?.topic || '未填写主题'}</h3>
                 <p>卖点：{task3InputRecord?.sellingPoints?.join(' / ') || '-'}</p>
                 <p>素材数量：{task3InputRecord?.materials?.length ?? 0}</p>
+                <p>分析模式：{task3AnalysisResult.analysisMode ?? task3Settings.materialUnderstanding.mode}</p>
               </article>
 
               <article className="analysis-result-card">
@@ -1776,10 +2268,51 @@ function App() {
                 <p className="section-kicker">已识别素材</p>
                 <div className="analysis-shot-list">
                   {task3AnalysisResult.materialInventory.map((item) => (
-                    <div key={item.materialId} className="analysis-shot-item">
-                      <strong>{item.materialName ?? item.materialId}</strong>
-                      <span>{item.usableForSlots?.join(' / ') || '待补充标签'}</span>
-                    </div>
+                    <article key={item.materialId} className="analysis-step-card material-result-card">
+                      <div className="analysis-step-card-heading">
+                        <div>
+                          <p className="section-kicker">{item.materialType ?? 'material'}</p>
+                          <h3>{item.materialName ?? item.materialId}</h3>
+                        </div>
+                        <span className="confidence-pill">{Math.round((item.confidence ?? 0) * 100)}%</span>
+                      </div>
+                      {item.url || item.materialType === 'text' ? (
+                        <div className={`material-preview material-preview-${item.materialType ?? 'text'}`}>
+                          {renderTask3MaterialPreview({
+                            id: item.materialId,
+                            type:
+                              item.materialType === 'image' ||
+                              item.materialType === 'video' ||
+                              item.materialType === 'audio' ||
+                              item.materialType === 'text'
+                                ? item.materialType
+                                : 'text',
+                            name: item.materialName ?? item.materialId,
+                            url: item.url ?? undefined,
+                            text: item.detectedText?.join('\n') ?? item.summary,
+                          })}
+                        </div>
+                      ) : null}
+                      <p>{item.summary ?? item.usableForSlots?.join(' / ') ?? '待补充标签'}</p>
+                      {item.recommendedSlots?.length ? (
+                        <div className="tag-row">
+                          {item.recommendedSlots.slice(0, 4).map((slot) => (
+                            <span key={slot.slotId} className="status-pill status-uploaded" title={slot.reason}>
+                              {slot.slotName} {Math.round(slot.confidence * 100)}%
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                      {item.usableSegments?.length ? (
+                        <p>
+                          可用片段：
+                          {item.usableSegments
+                            .map((segment) => `${segment.label} ${segment.start}s-${segment.end}s`)
+                            .join(' / ')}
+                        </p>
+                      ) : null}
+                      {item.audioSummary ? <p>{item.audioSummary}</p> : null}
+                    </article>
                   ))}
                 </div>
               </article>
@@ -1788,11 +2321,40 @@ function App() {
                 <p className="section-kicker">结构槽位匹配</p>
                 <div className="analysis-shot-list">
                   {task3AnalysisResult.slotMatches.map((slot) => (
-                    <div key={slot.slotId} className="analysis-shot-item">
-                      <strong>{slot.slotName}</strong>
-                      <span>{slot.status}</span>
-                    </div>
+                    <article key={slot.slotId} className="analysis-step-card slot-match-card">
+                      <div className="analysis-step-card-heading">
+                        <div>
+                          <p className="section-kicker">{slot.slotId}</p>
+                          <h3>{slot.slotName}</h3>
+                        </div>
+                        <span className={`status-pill status-${slot.status === 'missing' ? 'failed' : 'ready'}`}>
+                          {slot.status}
+                        </span>
+                      </div>
+                      <p>{slot.requiredMaterial}</p>
+                      <p>{slot.reason}</p>
+                      <p>
+                        匹配素材：{slot.matchedMaterialIds.length ? slot.matchedMaterialIds.join(' / ') : '-'} ·
+                        置信度 {Math.round((slot.confidence ?? 0) * 100)}%
+                      </p>
+                    </article>
                   ))}
+                </div>
+              </article>
+
+              <article className="analysis-result-card analysis-result-wide">
+                <p className="section-kicker">剪辑建议</p>
+                <div className="analysis-shot-list">
+                  {task3AnalysisResult.editingHints?.length ? (
+                    task3AnalysisResult.editingHints.map((hint, index) => (
+                      <div key={`${hint.targetSlot}-${hint.materialId ?? index}`} className="analysis-shot-item">
+                        <strong>{hint.operation}</strong>
+                        <span>{hint.reason}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">暂无剪辑建议。</div>
+                  )}
                 </div>
               </article>
             </div>

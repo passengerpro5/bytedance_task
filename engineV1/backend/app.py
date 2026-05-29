@@ -40,6 +40,7 @@ from .config import (
 )
 from .schemas import (
     AnalysisRequest,
+    CompositionCreateRequest,
     SettingsUpdateRequest,
     Task3AnalyzeRequest,
     Task3GapUpdateRequest,
@@ -63,6 +64,14 @@ from .services.task3_service import (
     create_task3_input_record,
     get_task3_input_record,
     task3_material_from_payload,
+)
+from .services.structure_normalizer import (
+    normalize_decomposition_to_structure,
+    validate_structure_completeness,
+)
+from .services.composition_planner import (
+    generate_composition,
+    generate_composition_fallback,
 )
 from .video_decompose import (
     decompose_video_content,
@@ -1078,6 +1087,51 @@ def get_video_decomposition(video_id: str) -> dict[str, Any]:
     return decomposition
 
 
+@app.get("/api/videos/{video_id}/structure")
+def get_video_structure(video_id: str) -> dict[str, Any]:
+    """Return the normalized VideoStructure for a video.
+
+    Reads the latest decomposition result and normalizes it into a stable
+    schema that downstream consumers (composition_planner, page 4, page 7)
+    can rely on.
+    """
+    get_video_record(video_id)
+
+    candidates = sorted(
+        DECOMPOSITION_DIR.glob(f"{video_id}_decomposition*.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+
+    raw_decomposition: dict[str, Any] | None = None
+    for path in candidates:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if data.get("overview") or data.get("steps"):
+                raw_decomposition = data
+                break
+        except (OSError, json.JSONDecodeError):
+            continue
+
+    if raw_decomposition is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No completed decomposition found. Run analysis first.",
+        )
+
+    structure = normalize_decomposition_to_structure(raw_decomposition)
+    completeness = validate_structure_completeness(structure)
+
+    return {
+        "videoId": video_id,
+        "structure": structure,
+        "completeness": completeness,
+        "sourceMethod": raw_decomposition.get("methodName"),
+        "sourceModel": raw_decomposition.get("model"),
+        "sourceCompletedAt": raw_decomposition.get("completedAt"),
+    }
+
+
 @app.post("/api/videos/{video_id}/analysis")
 def analyze_video(video_id: str, payload: AnalysisRequest) -> dict[str, Any]:
     return analyze_video_record(video_id, payload)
@@ -1243,7 +1297,26 @@ async def upload_task3_materials(input_id: str, files: list[UploadFile] = File(.
 @app.post("/api/task3/inputs/{input_id}/analyze")
 def analyze_task3(input_id: str, payload: Task3AnalyzeRequest) -> dict[str, Any]:
     input_record = get_task3_input_record(input_id)
-    analysis_record = analyze_task3_input(input_record, payload.settings)
+
+    video_structure = None
+    if payload.videoId:
+        candidates = sorted(
+            DECOMPOSITION_DIR.glob(f"{payload.videoId}_*decomposition*.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for path in candidates:
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                if data.get("overview") or data.get("steps"):
+                    video_structure = normalize_decomposition_to_structure(data)
+                    break
+            except (OSError, json.JSONDecodeError):
+                continue
+
+    analysis_record = analyze_task3_input(
+        input_record, payload.settings, video_structure=video_structure
+    )
     records = load_task3_analysis_records()
     records.insert(0, analysis_record)
     save_task3_analysis_records(records)
@@ -1272,3 +1345,92 @@ def update_task3_gaps(analysis_id: str, payload: Task3GapUpdateRequest) -> dict[
     target["summary"] = "内容完整无缺口" if not payload.gaps else f"当前保留 {len(payload.gaps)} 个素材缺口。"
     save_task3_analysis_records(records)
     return target
+
+
+# ─── Composition Planner (Agent 4) ───────────────────────────────────────────
+
+COMPOSITIONS_PATH = DATA_DIR / "compositions.json"
+COMPOSITIONS_LOCK = Lock()
+
+
+def _load_compositions() -> list[dict[str, Any]]:
+    return load_json_file_safe(COMPOSITIONS_PATH, [])
+
+
+def _save_compositions(records: list[dict[str, Any]]) -> None:
+    COMPOSITIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    COMPOSITIONS_PATH.write_text(
+        json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+@app.post("/api/compositions")
+def create_composition(payload: CompositionCreateRequest) -> dict[str, Any]:
+    """Generate a new composition from VideoStructure + Task3 analysis via LLM."""
+    # 1. Load video structure
+    decomp_files = sorted(DECOMPOSITION_DIR.glob(f"{payload.videoId}_*decomposition*.json"))
+    if not decomp_files:
+        raise HTTPException(status_code=404, detail="No decomposition found for this video.")
+
+    decomposition = json.loads(decomp_files[-1].read_text(encoding="utf-8"))
+    video_structure = normalize_decomposition_to_structure(decomposition)
+
+    # 2. Load task3 analysis
+    analysis_records = load_task3_analysis_records()
+    task3_analysis = next(
+        (r for r in analysis_records if r.get("id") == payload.task3AnalysisId), None
+    )
+    if task3_analysis is None:
+        raise HTTPException(status_code=404, detail="Task3 analysis not found.")
+
+    # 3. Load task3 input
+    task3_input = next(
+        (r for r in load_task3_inputs() if r.get("id") == payload.task3InputId), None
+    )
+    if task3_input is None:
+        raise HTTPException(status_code=404, detail="Task3 input not found.")
+
+    # 4. Generate composition
+    try:
+        if payload.useFallback:
+            result = generate_composition_fallback(
+                video_structure, task3_analysis, task3_input, payload.versionStyle
+            )
+        else:
+            config = load_llm_config()
+            result = generate_composition(
+                video_structure, task3_analysis, task3_input, payload.versionStyle, config
+            )
+    except (ValueError, RuntimeError) as exc:
+        result = generate_composition_fallback(
+            video_structure, task3_analysis, task3_input, payload.versionStyle
+        )
+        result["meta"]["fallbackReason"] = str(exc)
+
+    result["videoId"] = payload.videoId
+
+    # 5. Persist
+    with COMPOSITIONS_LOCK:
+        records = _load_compositions()
+        records.insert(0, result)
+        _save_compositions(records)
+
+    return result
+
+
+@app.get("/api/compositions")
+def list_compositions(video_id: str | None = None) -> list[dict[str, Any]]:
+    """List all compositions, optionally filtered by videoId."""
+    records = _load_compositions()
+    if video_id:
+        records = [r for r in records if r.get("videoId") == video_id]
+    return records
+
+
+@app.get("/api/compositions/{composition_id}")
+def get_composition(composition_id: str) -> dict[str, Any]:
+    """Get a single composition by ID."""
+    record = next((r for r in _load_compositions() if r.get("id") == composition_id), None)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Composition not found.")
+    return record

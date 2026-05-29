@@ -61,7 +61,16 @@ class Task3InputUpdateRequest(BaseModel):
 
 class Task3AnalyzeRequest(BaseModel):
     settings: dict[str, Any] | None = None
+    videoId: str | None = None
 
 
 class Task3GapUpdateRequest(BaseModel):
     gaps: list[dict[str, Any]]
+
+
+class CompositionCreateRequest(BaseModel):
+    videoId: str
+    task3InputId: str
+    task3AnalysisId: str
+    versionStyle: str = "balanced"
+    useFallback: bool = False

@@ -28,6 +28,20 @@ export const EMPTY_TASK3_DRAFT: Task3Draft = {
 export const EMPTY_TASK3_SETTINGS: Task3SettingsState = {
   targetMode: 'material-fit',
   inputMode: 'structured',
+  materialUnderstanding: {
+    mode: 'standard',
+    enabledAnalyzers: {
+      metadata: true,
+      sceneDetect: true,
+      ocr: true,
+      asr: true,
+      vision: true,
+      audioMood: false,
+    },
+    slotMatchingStrategy: 'hybrid',
+    confidenceThreshold: 0.65,
+    defaultGapFixes: ['text_fill', 'packaging_fill', 'reuse_crop', 'structure_reorder'],
+  },
   steps: [
     {
       id: 'material-inventory',

@@ -52,6 +52,7 @@ export type PageName =
   | 'analysis'
   | 'analysis-settings'
   | 'task3'
+  | 'task3-reference'
   | 'task3-settings'
   | 'task3-result'
   | 'task3-fix'
@@ -186,11 +187,13 @@ export type AnalysisApiResponse = {
 
 export type Task3Material = {
   id: string
-  type: 'image' | 'video' | 'text'
+  type: 'image' | 'video' | 'text' | 'audio'
   name: string
   url?: string
   text?: string | null
   tags?: string[]
+  usageHint?: string
+  notes?: string
 }
 
 export type Task3Draft = {
@@ -225,11 +228,31 @@ export type Task3AnalysisResult = {
     materialId: string
     materialName?: string
     materialType?: string
+    summary?: string
+    url?: string | null
     detectedObjects?: string[]
     detectedScenes?: string[]
     detectedText?: string[]
+    audioSummary?: string
+    usableSegments?: Array<{
+      start: number
+      end: number
+      label: string
+      recommendedSlots: string[]
+      confidence?: number
+    }>
+    recommendedSlots?: Array<{
+      slotId: string
+      slotName: string
+      reason: string
+      confidence: number
+    }>
     usableForSlots?: string[]
     confidence?: number
+    quality?: Record<string, unknown>
+    manualTags?: string[]
+    usageHint?: string
+    notes?: string
   }>
   slotMatches: Array<{
     slotId: string
@@ -237,6 +260,7 @@ export type Task3AnalysisResult = {
     requiredMaterial: string
     matchedMaterialIds: string[]
     status: 'covered' | 'partial' | 'missing'
+    confidence?: number
     reason: string
   }>
   gaps: Array<{
@@ -248,6 +272,14 @@ export type Task3AnalysisResult = {
     suggestedFixes: string[]
     resolution?: string
   }>
+  editingHints?: Array<{
+    type: string
+    materialId?: string | null
+    operation: string
+    targetSlot: string
+    reason: string
+  }>
+  analysisMode?: string
   summary: string
   createdAt: string
 }
@@ -263,6 +295,20 @@ export type Task3SettingStep = {
 export type Task3SettingsState = {
   targetMode: string
   inputMode: 'structured' | 'multimodal'
+  materialUnderstanding: {
+    mode: 'fast' | 'standard' | 'deep'
+    enabledAnalyzers: {
+      metadata: boolean
+      sceneDetect: boolean
+      ocr: boolean
+      asr: boolean
+      vision: boolean
+      audioMood: boolean
+    }
+    slotMatchingStrategy: 'rule-first' | 'llm-first' | 'hybrid'
+    confidenceThreshold: number
+    defaultGapFixes: Array<'text_fill' | 'packaging_fill' | 'reuse_crop' | 'structure_reorder' | 'aigc_generate'>
+  }
   steps: Task3SettingStep[]
 }
 
