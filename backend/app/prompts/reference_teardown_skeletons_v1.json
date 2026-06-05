@@ -1,0 +1,343 @@
+{
+  "version": "moras_persona_social_reference_skeletons_v1",
+  "scope_note": "This document compiles reference teardown skeletons from four social distribution videos for Moras. It outlines the structural patterns, asset slot requirements, and persona dynamics to guide downstream Script Agents in generating high-performing, organic social scripts while preserving the integrity of real Moras product assets and preventing misleading performance claims.",
+  "reference_teardown_skeletons": [
+    {
+      "reference_id": "moras_reference_01_conversational_duo",
+      "source_label": "moras_reference_01",
+      "duration_sec": 38,
+      "persona_pattern": {
+        "archetype": "Skeptic & Advocate Duo",
+        "setting": "Domestic kitchen table, casual lifestyle setting",
+        "camera_relationship": "Third-person observer, organic vlog style",
+        "trust_stance": "Relatable peer-to-peer recommendation",
+        "why_persona_matters": "By framing the product as a casual recommendation between close friends, it bypasses the viewer's natural defense mechanisms against direct commercial pitches."
+      },
+      "social_distribution_pattern": "Organic POV conversational drama with a 'before/after' narrative arc",
+      "timeline_asset_slots": [
+        {
+          "slot_id": "hook_conflict",
+          "time_range": "0s-14s",
+          "narrative_phase": "Pain Point & Conflict Introduction",
+          "material_type": "creator_live_footage",
+          "layer": "base_track",
+          "observed_usage": "Two creators in a kitchen discussing the desire for side income versus the absolute dread of tedious video editing, scripting, and filming.",
+          "why_this_material_here": "Establishes immediate emotional resonance with the 'lazy-but-ambitious' creator demographic by validating their aversion to traditional content creation labor.",
+          "script_agent_learning": "Keep this phase entirely creator-led with high-expression acting. Do not introduce any product assets or UI elements yet."
+        },
+        {
+          "slot_id": "product_intro",
+          "time_range": "14s-23s",
+          "narrative_phase": "Product Introduction & Workflow Demo",
+          "material_type": "mixed",
+          "layer": "picture_in_picture",
+          "observed_usage": "The advocate creator is superimposed via green screen over a real Moras App screen recording showing product selection and one-click video generation, alongside a GMV proof screenshot.",
+          "why_this_material_here": "Provides immediate visual proof of the 'one-click' simplicity claim, grounding the conversation in a real, functional tool.",
+          "script_agent_learning": "This slot requires a real Moras screen recording. The creator must remain visible as a picture-in-picture overlay to maintain the personal trust connection."
+        },
+        {
+          "slot_id": "time_lapse_proof",
+          "time_range": "24s-35s",
+          "narrative_phase": "Time-Lapse Validation & Payoff",
+          "material_type": "mixed",
+          "layer": "base_track",
+          "observed_usage": "A '5 days later' text card transitions to a quick montage of the skeptic creator checking her phone in various everyday settings, culminating in a close-up of a $680.64 GMV dashboard.",
+          "why_this_material_here": "Creates a narrative payoff that demonstrates rapid, low-effort success, resolving the initial conflict.",
+          "script_agent_learning": "The montage must use creator-led lifestyle footage to emphasize that the tool fits seamlessly into daily life. The final payoff must feature a real metrics screenshot. Mark the $680.64 GMV as an observed source claim only."
+        },
+        {
+          "slot_id": "cta_waitlist",
+          "time_range": "36s-38s",
+          "narrative_phase": "Call to Action",
+          "material_type": "signup_or_waitlist_ui",
+          "layer": "end_card",
+          "observed_usage": "Moras App signup screen with a prominent red arrow pointing to the 'Join the waitlist' button.",
+          "why_this_material_here": "Directs the high-intent viewer to a low-friction conversion point while creating a sense of exclusivity.",
+          "script_agent_learning": "Must use the real Moras waitlist/signup UI asset. Do not substitute with generic app store graphics."
+        }
+      ],
+      "what_to_generate_with_ai": [
+        "The B-roll style shoppable video outputs shown within the Moras interface demo."
+      ],
+      "what_must_use_real_moras_assets": [
+        "Real Moras App product selection and generation screen recording.",
+        "Real Moras waitlist/signup UI screen."
+      ],
+      "what_can_use_digital_human_or_creator_footage": [
+        "The kitchen conversation scenes.",
+        "The lifestyle montage scenes of checking the phone."
+      ],
+      "do_not_copy": [
+        "The specific actors' faces or voices.",
+        "The exact 'Girl, you were right!' phrasing.",
+        "The specific $680.64 GMV figure as a guaranteed benchmark."
+      ],
+      "risk_flags": [
+        "Do not present the '5 days to $680' timeline as a guaranteed promise. It must be framed strictly as an observed user case study."
+      ]
+    },
+    {
+      "reference_id": "moras_reference_02_niche_mentor",
+      "source_label": "moras_reference_02",
+      "duration_sec": 47,
+      "persona_pattern": {
+        "archetype": "Professional Operator / Niche Mentor",
+        "setting": "Inside a car (waiting to pick up kids), highly casual and authentic",
+        "camera_relationship": "Direct-to-camera selfie style",
+        "trust_stance": "Peer-to-peer insider sharing a monetization shortcut",
+        "why_persona_matters": "The mundane car setting strips away corporate polish, making the creator's high-revenue claims feel like an authentic, unedited insider secret."
+      },
+      "social_distribution_pattern": "Direct-to-camera KOC monetization tutorial with dynamic overlays",
+      "timeline_asset_slots": [
+        {
+          "slot_id": "hook",
+          "time_range": "0s-8s",
+          "narrative_phase": "Target Audience Filtering & Hook",
+          "material_type": "mixed",
+          "layer": "base_track",
+          "observed_usage": "Creator speaks directly to the camera in her car, overlaying a $30.8K GMV screenshot, specifically targeting creators with 5,000 followers who struggle to monetize.",
+          "why_this_material_here": "Instantly filters the audience to high-intent KOCs and hooks them with an aspirational revenue figure.",
+          "script_agent_learning": "Keep the base track as creator-led footage in a highly casual setting. Use a real metrics screenshot overlay to establish immediate authority."
+        },
+        {
+          "slot_id": "solution_intro",
+          "time_range": "9s-17s",
+          "narrative_phase": "Solution Introduction",
+          "material_type": "product_broll_or_ugc",
+          "layer": "cutaway",
+          "observed_usage": "Creator introduces Moras AI while the screen cuts to high-performing shoppable video examples generated by the tool.",
+          "why_this_material_here": "Visually demonstrates the quality of the output the tool can produce, proving it matches professional standards.",
+          "script_agent_learning": "Use actual high-quality shoppable video outputs as B-roll cutaways here."
+        },
+        {
+          "slot_id": "demo",
+          "time_range": "18s-26s",
+          "narrative_phase": "Product Workflow Demo",
+          "material_type": "real_moras_screen_recording",
+          "layer": "base_track",
+          "observed_usage": "Screen recording of the Moras App UI showing the selection of a blanket and the one-click generation process.",
+          "why_this_material_here": "Demystifies the technology by showing how simple it is to go from product to video.",
+          "script_agent_learning": "Must use a real Moras App screen recording. Emphasize the 'no filming, no editing' aspect in the accompanying voiceover instructions."
+        },
+        {
+          "slot_id": "proof",
+          "time_range": "27s-39s",
+          "narrative_phase": "Social Proof & Efficiency Quantification",
+          "material_type": "metrics_proof_screenshot",
+          "layer": "overlay",
+          "observed_usage": "Creator claims '5 videos in 3 minutes' while scrolling through successful TikTok creator profiles and GMV charts.",
+          "why_this_material_here": "Overcomes skepticism by showing that multiple other creators are successfully replicating this high-volume strategy.",
+          "script_agent_learning": "The '5 videos in 3 minutes' is an efficiency claim. The profile scrolls and GMV charts must be real platform screenshots."
+        },
+        {
+          "slot_id": "cta",
+          "time_range": "40s-47s",
+          "narrative_phase": "Action Guidance",
+          "material_type": "signup_or_waitlist_ui",
+          "layer": "end_card",
+          "observed_usage": "Creator guides users with over 5,000 followers to register and claim a beginner bonus.",
+          "why_this_material_here": "Converts the filtered audience by offering a clear, exclusive incentive.",
+          "script_agent_learning": "Ensure the CTA matches the specific entry barrier (e.g., 5,000 followers) established in the hook."
+        }
+      ],
+      "what_to_generate_with_ai": [
+        "The sample shoppable video clips used as B-roll in the solution introduction."
+      ],
+      "what_must_use_real_moras_assets": [
+        "Real Moras App UI screen recording of the selection and generation workflow.",
+        "Real Moras beginner bonus or registration interface."
+      ],
+      "what_can_use_digital_human_or_creator_footage": [
+        "The car-based talking-head footage."
+      ],
+      "do_not_copy": [
+        "The specific car setting or the creator's personal identity.",
+        "The exact $30.8K GMV figure as a guaranteed outcome."
+      ],
+      "risk_flags": [
+        "Do not promise that any creator with 5,000 followers will achieve $30.8K GMV. Frame this strictly as an observed milestone achieved by a specific creator."
+      ]
+    },
+    {
+      "reference_id": "moras_reference_03_skeptical_reviewer",
+      "source_label": "moras_reference_03",
+      "duration_sec": 45,
+      "persona_pattern": {
+        "archetype": "Skeptical Reviewer / Tech Tester",
+        "setting": "Casual home office or living room",
+        "camera_relationship": "Direct-to-camera, honest review style",
+        "trust_stance": "Objective tester investigating if a viral tool is overhyped",
+        "why_persona_matters": "Starting with skepticism aligns the creator with the viewer's natural doubts, making the subsequent positive review highly credible."
+      },
+      "social_distribution_pattern": "Objective tech review and live-testing format",
+      "timeline_asset_slots": [
+        {
+          "slot_id": "hook_results",
+          "time_range": "0s-9s",
+          "narrative_phase": "High-Impact Results Hook",
+          "material_type": "mixed",
+          "layer": "base_track",
+          "observed_usage": "Rapid montage of multiple creators showing their monthly GMV and commission numbers on their phones.",
+          "why_this_material_here": "Establishes the scale of the trend and triggers curiosity before the reviewer introduces his skeptical angle.",
+          "script_agent_learning": "Use real user-generated content (UGC) or screenshots of real Moras creators' dashboards. Keep the cuts fast (1.5s per cut)."
+        },
+        {
+          "slot_id": "skeptical_intro",
+          "time_range": "10s-14s",
+          "narrative_phase": "Conflict & Persona Introduction",
+          "material_type": "creator_live_footage",
+          "layer": "base_track",
+          "observed_usage": "Male creator in his living room stating that most tools like this are overhyped and announcing his intention to test it himself.",
+          "why_this_material_here": "Lowers the viewer's advertising guard by adopting a critical, non-salesy stance.",
+          "script_agent_learning": "Keep this entirely creator-led. The tone must be neutral, objective, and slightly critical."
+        },
+        {
+          "slot_id": "product_demo",
+          "time_range": "15s-22s",
+          "narrative_phase": "Real-Time Product Test",
+          "material_type": "real_moras_screen_recording",
+          "layer": "base_track",
+          "observed_usage": "Handheld mobile screen recording showing the creator navigating the Moras App, selecting a high-commission blanket, and clicking 'Custom Create'.",
+          "why_this_material_here": "Demonstrates the actual, unedited workflow to prove the tool is functional and easy to use.",
+          "script_agent_learning": "Must use a real Moras mobile app screen recording. Retain visible touch indicators to prove it is a live, unedited test."
+        },
+        {
+          "slot_id": "result_reveal",
+          "time_range": "23s-42s",
+          "narrative_phase": "Payoff & Multi-Layered Validation",
+          "material_type": "mixed",
+          "layer": "mixed",
+          "observed_usage": "Displays 3 high-quality AI-generated video outputs, followed by the creator's personal 1-week $22.9K GMV screenshot and Discord community chat logs.",
+          "why_this_material_here": "Directly addresses the doubt that 'AI videos look fake' by showing high-quality outputs, then backs it up with both personal and community financial success.",
+          "script_agent_learning": "The AI-generated videos shown must be actual outputs from Moras. The Discord screenshots must be real community assets. Mark the $22.9K GMV as an observed claim."
+        },
+        {
+          "slot_id": "cta",
+          "time_range": "43s-45s",
+          "narrative_phase": "Soft Call to Action",
+          "material_type": "signup_or_waitlist_ui",
+          "layer": "end_card",
+          "observed_usage": "App download card with a soft recommendation: 'If you're serious about TikTok Shop, you'll run into this eventually.'",
+          "why_this_material_here": "Maintains the objective reviewer persona by avoiding a hard sell, which actually increases conversion trust.",
+          "script_agent_learning": "Use a clean, non-aggressive end card featuring the real Moras app icon and download path."
+        }
+      ],
+      "what_to_generate_with_ai": [
+        "The 3 sample AI-generated video outputs shown during the result reveal."
+      ],
+      "what_must_use_real_moras_assets": [
+        "Real Moras App UI screen recording.",
+        "Real Moras Gold creator certificate or dashboard interface.",
+        "Real Discord community chat screenshots."
+      ],
+      "what_can_use_digital_human_or_creator_footage": [
+        "The reviewer's talking-head footage.",
+        "The initial montage of other creators showing their phones."
+      ],
+      "do_not_copy": [
+        "The specific $22.9K GMV figure as a guaranteed baseline.",
+        "The specific Draper James blanket product.",
+        "The reviewer's exact identity."
+      ],
+      "risk_flags": [
+        "Ensure the $22.9K GMV is clearly labeled as an observed case study. Do not imply that every user will achieve this within a week."
+      ]
+    },
+    {
+      "reference_id": "moras_reference_04_workflow_comparison",
+      "source_label": "moras_reference_04",
+      "duration_sec": 24,
+      "persona_pattern": {
+        "archetype": "Efficiency Expert / Smart Creator",
+        "setting": "Home studio / desk setup",
+        "camera_relationship": "Direct-to-camera and POV workflow shots",
+        "trust_stance": "I stopped doing things the hard way, and my results skyrocketed.",
+        "why_persona_matters": "Appeals directly to exhausted creators who are burnt out by physical production, offering them an immediate operational escape route."
+      },
+      "social_distribution_pattern": "Before vs. After workflow comparison with hard data proof",
+      "timeline_asset_slots": [
+        {
+          "slot_id": "hook",
+          "time_range": "0s-2s",
+          "narrative_phase": "Pain Point Visualization (Before)",
+          "material_type": "creator_live_footage",
+          "layer": "base_track",
+          "observed_usage": "Creator struggling to set up physical backdrops, ring lights, and products on a desk, labeled 'Before'.",
+          "why_this_material_here": "Instantly triggers empathy in creators by visualizing the physical exhaustion of traditional filming.",
+          "script_agent_learning": "Keep this entirely creator-led. Focus on physical clutter, effort, and frustration."
+        },
+        {
+          "slot_id": "solution",
+          "time_range": "2s-5s",
+          "narrative_phase": "Solution Visualization (Now)",
+          "material_type": "real_moras_screen_recording",
+          "layer": "base_track",
+          "observed_usage": "Smooth transition to tapping 'Generate Videos in 1 Click' on the Moras App, showing instant high-quality output, labeled 'Now'.",
+          "why_this_material_here": "Delivers immediate relief and a stark contrast to the physical stress of the 'Before' scene.",
+          "script_agent_learning": "Must use real Moras App UI assets to show the '1 Click' action clearly."
+        },
+        {
+          "slot_id": "proof",
+          "time_range": "5s-8s",
+          "narrative_phase": "Financial Validation",
+          "material_type": "metrics_proof_screenshot",
+          "layer": "overlay",
+          "observed_usage": "Creator smiling, overlaying a TikTok Shop GMV comparison showing a jump from $680.64 to $20,918.38 highlighted with a red circle.",
+          "why_this_material_here": "Proves that the simplified workflow actually yields far superior financial results.",
+          "script_agent_learning": "Use a real or highly realistic dashboard screenshot. Mark the $20k jump as an observed claim, not a guarantee."
+        },
+        {
+          "slot_id": "mechanism",
+          "time_range": "8s-18s",
+          "narrative_phase": "Operational Explanation",
+          "material_type": "moras_product_ui_cutaway",
+          "layer": "cutaway",
+          "observed_usage": "Shows Moras App's Posts management interface (batch processing) and product catalog with GMV stats.",
+          "why_this_material_here": "Explains the logic behind the success (volume and efficiency) rather than just claiming it happens.",
+          "script_agent_learning": "Use real Moras UI cutaways showing batch management and catalog navigation."
+        },
+        {
+          "slot_id": "cta",
+          "time_range": "18s-24s",
+          "narrative_phase": "Cognitive Shift & Action",
+          "material_type": "signup_or_waitlist_ui",
+          "layer": "end_card",
+          "observed_usage": "Creator points upwards to the Moras App Store download page overlay.",
+          "why_this_material_here": "Directs the high-excitement viewer to the exact point of conversion.",
+          "script_agent_learning": "Use the real App Store/Google Play Moras download UI."
+        }
+      ],
+      "what_to_generate_with_ai": [
+        "The sample product video outputs shown inside the app interface."
+      ],
+      "what_must_use_real_moras_assets": [
+        "Real Moras App Posts management UI.",
+        "Real Moras product catalog UI.",
+        "Real App Store download interface."
+      ],
+      "what_can_use_digital_human_or_creator_footage": [
+        "The 'Before' physical setup footage.",
+        "The creator's talking-head and pointing reactions."
+      ],
+      "do_not_copy": [
+        "The specific $20,918.38 GMV figure.",
+        "The specific steam cleaner or mattress products shown."
+      ],
+      "risk_flags": [
+        "Do not promise that switching to Moras will automatically scale GMV to $20k. Frame it as an efficiency-driven volume strategy."
+      ]
+    }
+  ],
+  "cross_reference_rules_for_script_agent": [
+    "Always maintain a clear distinction between creator-led lifestyle/talking-head footage (which builds trust and context) and real Moras UI assets (which build product credibility).",
+    "Never substitute real Moras UI screen recordings with generic AI-generated interface mockups; the downstream agent must understand that the actual app interface is crucial for conversion.",
+    "Ensure any financial claim (e.g., GMV, commission) is framed strictly as an 'observed user case study' and never as a platform-wide guarantee.",
+    "The transition from creator-led hook to Moras product demonstration must occur within the first 15 seconds of the video to prevent drop-off."
+  ],
+  "minimum_prompt_rules_to_add": [
+    "When generating scripts for persona-led videos, always specify the exact timestamp where the creator's live-action footage transitions to a real Moras screen recording.",
+    "Include a mandatory disclaimer in the script instructions stating that all GMV and commission figures are observed source claims and must not be written as absolute promises.",
+    "Define the creator's physical setting (e.g., car, kitchen, home studio) to match the organic, low-production-value aesthetic of social distribution channels.",
+    "Ensure the CTA always references a real Moras asset, such as the waitlist screen, invite code prompt, or App Store download page."
+  ]
+}
