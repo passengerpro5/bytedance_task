@@ -34,6 +34,7 @@ from .schemas import (
     MIN_SCRIPT_SPOKEN_DURATION_SEC,
     MIN_SCRIPT_VOICEOVER_LINES,
     MIN_SCRIPT_VOICEOVER_TOTAL_ENGLISH_WORDS,
+    MORAS_ASSET_CATEGORIES,
     PersonaEditRequest,
     PersonaGenerationJobRecord,
     PersonaGenerationJobStatus,
@@ -2554,8 +2555,10 @@ def normalize_script_agent_type_drift(item: dict[str, Any]) -> None:
         normalized_layer = normalize_production_asset_layer(entry.get("layer"), asset_type)
         if normalized_layer:
             entry["layer"] = normalized_layer
-        if not entry.get("moras_asset_category"):
-            entry["moras_asset_category"] = PRODUCTION_ASSET_FALLBACK_CATEGORIES.get(asset_type, "none")
+        entry["moras_asset_category"] = normalize_production_asset_category(
+            entry.get("moras_asset_category"),
+            asset_type,
+        )
 
     risk_check = item.get("risk_check")
     if isinstance(risk_check, dict):
@@ -3157,6 +3160,18 @@ def normalize_production_asset_layer(value: Any, asset_type: str) -> str:
     if asset_type in {"digital_human_avatar", "live_creator_footage"}:
         return "base_track"
     return str(value or "").strip()
+
+
+def normalize_production_asset_category(value: Any, asset_type: str) -> str:
+    fallback = PRODUCTION_ASSET_FALLBACK_CATEGORIES.get(asset_type, "none")
+    text = str(value or "").strip()
+    placeholder = text.strip(" .。").lower()
+    if placeholder in {"", "n/a", "na", "none", "null", "not_applicable", "not applicable", "无", "不适用", "没有"}:
+        return fallback
+    normalized = re.sub(r"[-\s]+", "_", text.lower())
+    if normalized in MORAS_ASSET_CATEGORIES:
+        return normalized
+    return text
 
 
 def repair_storyboard_for_schema(item: dict[str, Any]) -> dict[str, Any]:

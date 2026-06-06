@@ -1075,8 +1075,9 @@ def test_script_agent_normalizes_common_model_type_drift():
     item["storyboard"][1]["visual_elements"] = "None."
     item["video_prompt"]["consistency_notes"] = "Maintain the exact wardrobe and props across all segments."
     item["video_prompt"]["localized"]["zh"]["consistency_notes"] = "在所有片段中保持完全一致的服装和道具。"
-    item["production_asset_plan"][0]["moras_asset_category"] = None
-    item["production_asset_plan"][1]["moras_asset_category"] = None
+    item["production_asset_plan"][0]["moras_asset_category"] = "None"
+    item["production_asset_plan"][1]["moras_asset_category"] = "workflow screen recording"
+    item["production_asset_plan"][2]["moras_asset_category"] = "None."
     item["production_asset_plan"][2]["layer"] = "caption_layer"
     item["risk_check"]["forbidden_claims_checked"] = True
     item["risk_check"]["compliance_notes"] = "No guaranteed income claims. Workflow proof only."
@@ -1101,6 +1102,7 @@ def test_script_agent_normalizes_common_model_type_drift():
     assert parsed.video_prompt.consistency_notes == ["Maintain the exact wardrobe and props across all segments."]
     assert parsed.production_asset_plan[0].moras_asset_category == "none"
     assert parsed.production_asset_plan[1].moras_asset_category == "workflow_screen_recording"
+    assert parsed.production_asset_plan[2].moras_asset_category == "none"
     assert parsed.production_asset_plan[2].layer == "overlay"
     first_duration = storyboard_duration_seconds(parsed.storyboard[0].timestamp, parsed.storyboard[0].duration)
     assert first_duration is not None
